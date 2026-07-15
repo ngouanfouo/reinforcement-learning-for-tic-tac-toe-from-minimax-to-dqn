@@ -1506,8 +1506,13 @@ def sample_minibatch_from_buffer(buffer, batch_size, rng):
         'next_legal_masks': np.array(next_legal_masks)
     }
 
-# Step 78 - build_target_network_copy (not yet solved)
-# TODO: implement
+# Step 78 - build_target_network_copy
+def build_target_network_copy(online_params):
+    """Create an independent deep copy of the online network parameters."""
+    target_params = {}
+    for key, value in online_params.items():
+        target_params[key] = value.copy()
+    return target_params
 
 # Step 79 - compute_target_q_with_target_network (not yet solved)
 # TODO: implement
