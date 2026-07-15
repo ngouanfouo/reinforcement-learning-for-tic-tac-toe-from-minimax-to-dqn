@@ -649,8 +649,11 @@ def initialize_q_table():
     """Create an empty Q-table with default value 0.0 for missing keys."""
     return defaultdict(float)
 
-# Step 34 - get_q_value (not yet solved)
-# TODO: implement
+# Step 34 - get_q_value
+def get_q_value(q_table, state_key, action):
+    """Look up Q-value for (state, action) pair, returning 0.0 if not set."""
+    # Use get() to avoid inserting new entries
+    return q_table.get((state_key, action), 0.0)
 
 # Step 35 - set_q_value (not yet solved)
 # TODO: implement
