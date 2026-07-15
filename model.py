@@ -1233,8 +1233,14 @@ def deserialize_q_table_from_dict(serialized):
         q_table[state_key] = np.array(values, dtype=np.float64)
     return q_table
 
-# Step 64 - encode_board_flat_length_nine (not yet solved)
-# TODO: implement
+# Step 64 - encode_board_flat_length_nine
+def encode_board_flat_length_nine(board, current_player):
+    """Convert board to flat vector from current player's perspective."""
+    # Flip board perspective if needed
+    flipped_board = flip_board_perspective(board, current_player)
+    
+    # Flatten to shape (9,)
+    return flipped_board.flatten().astype(np.float32)
 
 # Step 65 - encode_board_one_hot_length_eighteen (not yet solved)
 # TODO: implement
