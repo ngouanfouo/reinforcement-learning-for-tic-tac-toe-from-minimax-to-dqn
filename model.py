@@ -1349,8 +1349,18 @@ def argmax_action_from_q_values(q_values):
     """Return the action index with the highest Q-value from masked array."""
     return int(np.argmax(q_values))
 
-# Step 71 - mse_loss_on_chosen_action (not yet solved)
-# TODO: implement
+# Step 71 - mse_loss_on_chosen_action
+def mse_loss_on_chosen_action(predicted_q, action_indices, target_q):
+    """Compute MSE loss between predicted and target Q-values for chosen actions."""
+    # Get predicted Q-values for the actions that were taken
+    # For each row, select the value at the index specified by action_indices
+    batch_indices = np.arange(len(action_indices))
+    predicted_actions = predicted_q[batch_indices, action_indices]
+    
+    # Compute mean squared error
+    loss = np.mean((predicted_actions - target_q) ** 2)
+    
+    return float(loss)
 
 # Step 72 - mlp_backward_pass (not yet solved)
 # TODO: implement
