@@ -1967,8 +1967,25 @@ def reinforce_log_prob_of_action(logits, legal_action_mask, action):
     
     return log_prob, probs
 
-# Step 88 - reinforce_collect_episode_returns (not yet solved)
-# TODO: implement
+# Step 88 - reinforce_collect_episode_returns
+def reinforce_collect_episode_returns(rewards, gamma):
+    """Compute discounted returns G_t for each timestep."""
+    # Convert to numpy array for easier computation
+    rewards = np.array(rewards, dtype=float)
+    
+    if len(rewards) == 0:
+        return np.array([], dtype=float)
+    
+    # Compute discounted returns from the end backwards
+    returns = np.zeros_like(rewards)
+    running_return = 0.0
+    
+    # Iterate backwards from the last timestep
+    for t in range(len(rewards) - 1, -1, -1):
+        running_return = rewards[t] + gamma * running_return
+        returns[t] = running_return
+    
+    return returns
 
 # Step 89 - reinforce_policy_gradient_update (not yet solved)
 # TODO: implement
