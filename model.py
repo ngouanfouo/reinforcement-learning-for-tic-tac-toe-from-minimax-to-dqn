@@ -1987,8 +1987,70 @@ def reinforce_collect_episode_returns(rewards, gamma):
     
     return returns
 
-# Step 89 - reinforce_policy_gradient_update (not yet solved)
-# TODO: implement
+# Step 89 - reinforce_policy_gradient_update
+def mask_illegal_actions_neg_inf(q_values, legal_mask):
+    """Replace illegal action Q-values with -inf, leaving legal entries untouched."""
+    legal_mask = np.asarray(legal_mask, dtype=bool)  # CRITICAL: ensure boolean before ~
+    masked = q_values.copy()
+    masked[~legal_mask] = -np.inf
+    return masked
+
+def reinforce_policy_gradient_update(params, episode_cache, returns, adam_state, learning_rate=1e-2):
+    """Apply one REINFORCE update that ascends sum_t G_t * log pi(a_t|s_t) through the policy MLP."""
+    
+    states = episode_cache['states']        # (T, input_dim)
+    actions = episode_cache['actions']      # (T,)
+    legal_masks = episode_cache['legal_masks']  # (T, 9)
+    
+    T = states.shape[0]
+    
+    if T == 0:
+        return params.copy(), adam_state
+    
+    dW1 = np.zeros_like(params['W1'])
+    db1 = np.zeros_like(params['b1'])
+    dW2 = np.zeros_like(params['W2'])
+    db2 = np.zeros_like(params['b2'])
+    
+    for t in range(T):
+        state = states[t:t+1]       # (1, input_dim)
+        action = actions[t]
+        legal_mask = legal_masks[t]
+        G_t = returns[t]
+        
+        logits, cache = mlp_forward_pass(params, state)
+        logits = logits[0]            # (9,)
+        
+        masked_logits = mask_illegal_actions_neg_inf(logits, legal_mask)
+        max_logit = np.max(masked_logits)
+        exp_logits = np.exp(masked_logits - max_logit)
+        probs = exp_logits / np.sum(exp_logits)   # (9,)
+        
+        dz = probs.copy()
+        dz[action] -= 1.0
+        dz *= G_t
+        dz = dz.reshape(1, -1)        # (1, 9)
+        
+        h1 = cache['h1']              # (1, hidden_dim)
+        z1 = cache['z1']              # (1, hidden_dim)
+        x = cache['x']                # (1, input_dim)
+        
+        dW2 += h1.T @ dz
+        db2 += dz[0]
+        
+        dh1 = dz @ params['W2'].T
+        dz1 = dh1 * (z1 > 0)
+        
+        dW1 += x.T @ dz1
+        db1 += dz1[0]
+    
+    dW1 /= T; db1 /= T; dW2 /= T; db2 /= T
+    
+    grads = {'W1': dW1, 'b1': db1, 'W2': dW2, 'b2': db2}
+    
+    new_params, new_adam_state = adam_update_step(params, grads, adam_state, learning_rate=learning_rate)
+    
+    return new_params, new_adam_state
 
 # Step 90 - train_reinforce_agent (not yet solved)
 # TODO: implement
