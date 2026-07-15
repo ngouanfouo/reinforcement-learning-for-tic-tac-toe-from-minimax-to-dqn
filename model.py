@@ -1514,8 +1514,34 @@ def build_target_network_copy(online_params):
         target_params[key] = value.copy()
     return target_params
 
-# Step 79 - compute_target_q_with_target_network (not yet solved)
-# TODO: implement
+# Step 79 - compute_target_q_with_target_network
+def compute_target_q_with_target_network(target_params, batch, gamma):
+    """Compute bootstrap targets using the frozen target network."""
+    # Get batch data
+    next_states = batch['next_states']  # (B, input_dim)
+    rewards = batch['rewards']           # (B,)
+    dones = batch['dones']               # (B,)
+    next_legal_masks = batch['next_legal_masks']  # (B, 9)
+    
+    # Forward pass through target network
+    q_next, _ = mlp_forward_pass(target_params, next_states)  # (B, 9)
+    
+    # Mask illegal actions with -inf
+    q_next_masked = mask_illegal_actions_neg_inf(q_next, next_legal_masks)
+    
+    # Get max Q-value over legal actions for each state
+    # For states with no legal actions, max should be 0 (handled by done flag)
+    max_q_next = np.max(q_next_masked, axis=1)  # (B,)
+    
+    # Replace -inf with 0 for terminal states (where done=True)
+    max_q_next = np.where(dones, 0.0, max_q_next)
+    
+    # Compute targets
+    # For terminal states: target = reward (no bootstrap)
+    # For non-terminal states: target = reward + gamma * max_q_next
+    targets = rewards + gamma * max_q_next * (~dones)
+    
+    return targets
 
 # Step 80 - sync_target_network_periodically (not yet solved)
 # TODO: implement
