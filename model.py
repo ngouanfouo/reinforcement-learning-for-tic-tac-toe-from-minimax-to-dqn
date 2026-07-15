@@ -770,8 +770,19 @@ def q_learning_terminal_target(reward):
     # TODO: return the terminal TD target given the observed reward.
     return float(reward)
 
-# Step 47 - q_learning_update (not yet solved)
-# TODO: implement
+# Step 47 - q_learning_update
+def q_learning_update(q_table, state_key, action, target, alpha):
+    """Perform one tabular Q-learning update and return new Q-value."""
+    # Get current Q-value (defaults to 0.0 if missing)
+    current_q = get_q_value(q_table, state_key, action)
+    
+    # Compute new Q-value using the update rule
+    new_q = current_q + alpha * (target - current_q)
+    
+    # Store the updated value
+    set_q_value(q_table, state_key, action, new_q)
+    
+    return new_q
 
 # Step 48 - episode_reset_game (not yet solved)
 # TODO: implement
