@@ -1305,8 +1305,33 @@ def initialize_mlp_parameters(arch, seed=0):
         'b2': b2
     }
 
-# Step 68 - mlp_forward_pass (not yet solved)
-# TODO: implement
+# Step 68 - mlp_forward_pass
+def mlp_forward_pass(params, x):
+    """Compute forward pass of 2-layer MLP with ReLU activation."""
+    # Extract parameters
+    W1 = params['W1']
+    b1 = params['b1']
+    W2 = params['W2']
+    b2 = params['b2']
+    
+    # Hidden layer pre-activation: z1 = x @ W1 + b1
+    z1 = x @ W1 + b1
+    
+    # Hidden layer activation: h1 = ReLU(z1)
+    h1 = np.maximum(0, z1)
+    
+    # Output layer: q = h1 @ W2 + b2
+    q = h1 @ W2 + b2
+    
+    # Cache for backprop
+    cache = {
+        'x': x,
+        'z1': z1,
+        'h1': h1,
+        'q': q
+    }
+    
+    return q, cache
 
 # Step 69 - mask_illegal_actions_neg_inf (not yet solved)
 # TODO: implement
