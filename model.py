@@ -1571,8 +1571,28 @@ def dqn_select_action(online_params, state, legal_mask, epsilon, rng):
         # Return argmax
         return argmax_action_from_q_values(masked_q)
 
-# Step 82 - dqn_train_step (not yet solved)
-# TODO: implement
+# Step 82 - dqn_train_step
+def dqn_train_step(online_params, target_params, adam_state, buffer, batch_size, gamma, lr, rng):
+    """Perform one DQN gradient update step."""
+    # Sample a minibatch from the replay buffer
+    batch = sample_minibatch_from_buffer(buffer, batch_size, rng)
+    
+    # Compute TD targets using the frozen target network
+    targets = compute_target_q_with_target_network(target_params, batch, gamma)
+    
+    # Forward pass through online network to get predictions and cache
+    q_pred, cache = mlp_forward_pass(online_params, batch['states'])
+    
+    # Compute loss (MSE on chosen actions)
+    loss = mse_loss_on_chosen_action(q_pred, batch['actions'], targets)
+    
+    # Backpropagate to get gradients
+    grads = mlp_backward_pass(online_params, cache, batch['actions'], targets)
+    
+    # Apply Adam update step
+    online_params, adam_state = adam_update_step(online_params, grads, adam_state, learning_rate=lr)
+    
+    return online_params, adam_state, loss
 
 # Step 83 - train_dqn_agent (not yet solved)
 # TODO: implement
