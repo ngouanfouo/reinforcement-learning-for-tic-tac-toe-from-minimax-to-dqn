@@ -608,8 +608,14 @@ def play_minimax_vs_minimax_matches(n_games):
     
     return rates
 
-# Step 31 - encode_board_state_key (not yet solved)
-# TODO: implement
+# Step 31 - encode_board_state_key
+def encode_board_state_key(board):
+    """Convert 3x3 board to 9-character string key for Q-table."""
+    # Define mapping from integer values to characters
+    mapping = {0: '0', 1: '1', -1: '2'}
+    
+    # Flatten board in row-major order and map each value
+    return ''.join(mapping[cell] for row in board for cell in row)
 
 # Step 32 - canonical_board_key (not yet solved)
 # TODO: implement
