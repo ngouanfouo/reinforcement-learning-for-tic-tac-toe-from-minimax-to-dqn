@@ -808,8 +808,35 @@ def episode_agent_pick_action(q_table, board, player, epsilon, rng):
     
     return state_key, action
 
-# Step 50 - episode_apply_action (not yet solved)
-# TODO: implement
+# Step 50 - episode_apply_action
+def episode_apply_action(board, action, player, agent_player):
+    """Apply action, evaluate result, return transition info."""
+    # Convert flat action to (row, col)
+    row = action // 3
+    col = action % 3
+    
+    # Place the move
+    next_board = place_move(board, row, col, player)
+    
+    # Get game status
+    status = get_game_status(next_board)
+    
+    # Calculate reward from agent's perspective
+    reward = tic_tac_toe_reward(status, agent_player)
+    
+    # Check if game is done
+    done = status != 'ongoing'
+    
+    # Always switch to the next player (even in terminal states)
+    next_player = switch_player(player)
+    
+    return {
+        'next_board': next_board,
+        'next_player': next_player,
+        'status': status,
+        'reward': reward,
+        'done': done
+    }
 
 # Step 51 - episode_apply_q_update (not yet solved)
 # TODO: implement
