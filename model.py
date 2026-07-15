@@ -385,8 +385,52 @@ def minimax_value(board, player):
     
     return max(values) if player == 1 else min(values)
 
-# Step 25 - minimax_recursive (not yet solved)
-# TODO: implement
+# Step 25 - minimax_recursive
+def minimax_recursive(board, player):
+    """Return the minimax value of `board` with `player` to move."""
+    # Initialize cache if it doesn't exist
+    if not hasattr(minimax_recursive, 'cache'):
+        minimax_recursive.cache = {}
+    
+    # Create cache key from board state and player
+    key = (board.tobytes(), player)
+    
+    # Check if already computed
+    if key in minimax_recursive.cache:
+        return minimax_recursive.cache[key]
+    
+    # Check if terminal state
+    status = get_game_status(board)
+    if status != 'ongoing':
+        value = minimax_terminal_score(status)
+        minimax_recursive.cache[key] = value
+        return value
+    
+    # Get legal moves
+    legal_moves = get_legal_moves(board)
+    
+    # If no legal moves but not terminal (shouldn't happen in Tic-Tac-Toe)
+    if not legal_moves:
+        value = 0  # Draw
+        minimax_recursive.cache[key] = value
+        return value
+    
+    # Evaluate all child positions
+    child_values = []
+    for row, col in legal_moves:
+        next_board = place_move(board, row, col, player)
+        next_player = switch_player(player)
+        child_values.append(minimax_recursive(next_board, next_player))
+    
+    # Return max for X (player=1), min for O (player=-1)
+    if player == 1:
+        value = max(child_values)
+    else:
+        value = min(child_values)
+    
+    # Cache the result
+    minimax_recursive.cache[key] = value
+    return value
 
 # Step 26 - minimax_max_min_step (not yet solved)
 # TODO: implement
