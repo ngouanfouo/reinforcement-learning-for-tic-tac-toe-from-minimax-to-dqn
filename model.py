@@ -2151,8 +2151,193 @@ def train_reinforce_agent(num_episodes, gamma, learning_rate, hidden_dim, oppone
         'episode_outcomes': episode_outcomes
     }
 
-# Step 91 - compare_value_vs_policy_learners (not yet solved)
-# TODO: implement
+# Step 91 - compare_value_vs_policy_learners
+def compare_value_vs_policy_learners(num_episodes=1000, eval_games=100, seed=42, hidden_dim=16):
+    """Compare Q-learning, SARSA, and REINFORCE agents."""
+    # Set up RNGs for each agent
+    rng_q = np.random.default_rng(seed)
+    rng_sarsa = np.random.default_rng(seed + 1)
+    rng_reinforce = np.random.default_rng(seed + 2)
+    
+    # Common hyperparameters
+    alpha = choose_learning_rate_alpha()
+    gamma = choose_discount_factor_gamma()
+    initial_epsilon = choose_initial_epsilon()
+    min_epsilon = 0.05
+    decay_rate = 0.001
+    learning_rate = 0.01
+    hidden_dim = hidden_dim
+    
+    # Define opponent policy for training
+    def random_opponent(board, player, rng):
+        return random_move_agent(board, player, rng)
+    
+    # 1. Train Q-learning agent
+    q_result = train_q_learning_agent(
+        num_episodes, alpha, gamma, initial_epsilon, min_epsilon, decay_rate,
+        random_opponent, rng_q
+    )
+    q_table = q_result['q_table']
+    q_outcomes = q_result['episode_outcomes']
+    
+    # Convert outcomes to scores (-1, 0, 1) from agent's perspective
+    q_scores = []
+    for outcome in q_outcomes:
+        if outcome == 'draw':
+            q_scores.append(0.0)
+        elif outcome == 'X_win':
+            q_scores.append(1.0)  # Agent is X, so X_win = agent win
+        else:  # 'O_win'
+            q_scores.append(-1.0)  # Agent is X, so O_win = agent loss
+    
+    # Evaluate Q-learning vs random and minimax
+    q_vs_random = evaluate_q_agent_vs_random(q_table, eval_games, rng_q)
+    q_vs_minimax = evaluate_q_agent_vs_minimax(q_table, eval_games, rng_q)
+    
+    # 2. Train SARSA agent
+    sarsa_result = train_sarsa_agent(
+        num_episodes, alpha, gamma, initial_epsilon, min_epsilon, decay_rate,
+        random_opponent, rng_sarsa
+    )
+    sarsa_table = sarsa_result['q_table']
+    sarsa_outcomes = sarsa_result['episode_outcomes']
+    
+    sarsa_scores = []
+    for outcome in sarsa_outcomes:
+        if outcome == 'draw':
+            sarsa_scores.append(0.0)
+        elif outcome == 'X_win':
+            sarsa_scores.append(1.0)
+        else:
+            sarsa_scores.append(-1.0)
+    
+    sarsa_vs_random = evaluate_q_agent_vs_random(sarsa_table, eval_games, rng_sarsa)
+    sarsa_vs_minimax = evaluate_q_agent_vs_minimax(sarsa_table, eval_games, rng_sarsa)
+    
+    # 3. Train REINFORCE agent
+    reinforce_result = train_reinforce_agent(
+        num_episodes, gamma, learning_rate, hidden_dim,
+        random_opponent, rng_reinforce, init_seed=seed + 10
+    )
+    reinforce_params = reinforce_result['params']
+    reinforce_outcomes = reinforce_result['episode_outcomes']
+    
+    reinforce_scores = []
+    for outcome in reinforce_outcomes:
+        if outcome == 'draw':
+            reinforce_scores.append(0.0)
+        elif outcome == 'X_win':
+            reinforce_scores.append(1.0)
+        else:
+            reinforce_scores.append(-1.0)
+    
+    # Evaluate REINFORCE vs random and minimax
+    # For REINFORCE, we need to evaluate the greedy policy
+    def reinforce_greedy(board, player, rng):
+        state = encode_board_flat_length_nine(board, player)
+        legal_moves = get_legal_moves(board)
+        legal_mask = np.zeros(9, dtype=bool)
+        for row, col in legal_moves:
+            legal_mask[row * 3 + col] = True
+        
+        q_vals, _ = mlp_forward_pass(reinforce_params, state.reshape(1, -1))
+        logits = q_vals[0]
+        masked_logits = mask_illegal_actions_neg_inf(logits, legal_mask)
+        
+        # Greedy action (epsilon=0)
+        action = np.argmax(masked_logits)
+        return action
+    
+    # Play games against random opponent
+    reinforce_vs_random_wins = 0
+    reinforce_vs_random_losses = 0
+    reinforce_vs_random_draws = 0
+    
+    for game_idx in range(eval_games):
+        agent_is_x = (game_idx % 2 == 0)
+        board = create_empty_board()
+        current_player = 1
+        done = False
+        
+        while not done:
+            is_agent_turn = (current_player == 1 and agent_is_x) or (current_player == -1 and not agent_is_x)
+            
+            if is_agent_turn:
+                action = reinforce_greedy(board, current_player, rng_reinforce)
+                row, col = action // 3, action % 3
+                board = place_move(board, row, col, current_player)
+            else:
+                row, col = random_move_agent(board, current_player, rng_reinforce)
+                board = place_move(board, row, col, current_player)
+            
+            status = get_game_status(board)
+            if status != 'ongoing':
+                done = True
+                agent_player = 1 if agent_is_x else -1
+                if status == 'draw':
+                    reinforce_vs_random_draws += 1
+                elif (status == 'X_win' and agent_player == 1) or (status == 'O_win' and agent_player == -1):
+                    reinforce_vs_random_wins += 1
+                else:
+                    reinforce_vs_random_losses += 1
+                break
+            
+            current_player = switch_player(current_player)
+    
+    reinforce_vs_random_win_rate = reinforce_vs_random_wins / eval_games if eval_games > 0 else 0.0
+    
+    # Play games against minimax opponent
+    reinforce_vs_minimax_draws = 0
+    for game_idx in range(eval_games):
+        agent_is_x = (game_idx % 2 == 0)
+        board = create_empty_board()
+        current_player = 1
+        done = False
+        
+        while not done:
+            is_agent_turn = (current_player == 1 and agent_is_x) or (current_player == -1 and not agent_is_x)
+            
+            if is_agent_turn:
+                action = reinforce_greedy(board, current_player, rng_reinforce)
+                row, col = action // 3, action % 3
+                board = place_move(board, row, col, current_player)
+            else:
+                _, move = minimax_alpha_beta(board, current_player, -10, 10)
+                if move is None:
+                    # Shouldn't happen in non-terminal state
+                    row, col = 0, 0
+                else:
+                    row, col = move
+                board = place_move(board, row, col, current_player)
+            
+            status = get_game_status(board)
+            if status != 'ongoing':
+                done = True
+                if status == 'draw':
+                    reinforce_vs_minimax_draws += 1
+                break
+            
+            current_player = switch_player(current_player)
+    
+    reinforce_vs_minimax_draw_rate = reinforce_vs_minimax_draws / eval_games if eval_games > 0 else 0.0
+    
+    return {
+        'q_learning': {
+            'win_rate_vs_random': q_vs_random['win_rate'],
+            'draw_rate_vs_minimax': q_vs_minimax['draw_rate'],
+            'learning_curve': q_scores
+        },
+        'sarsa': {
+            'win_rate_vs_random': sarsa_vs_random['win_rate'],
+            'draw_rate_vs_minimax': sarsa_vs_minimax['draw_rate'],
+            'learning_curve': sarsa_scores
+        },
+        'reinforce': {
+            'win_rate_vs_random': reinforce_vs_random_win_rate,
+            'draw_rate_vs_minimax': reinforce_vs_minimax_draw_rate,
+            'learning_curve': reinforce_scores
+        }
+    }
 
 # Step 92 - symmetry_augmented_training (not yet solved)
 # TODO: implement
