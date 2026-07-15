@@ -1224,8 +1224,14 @@ def serialize_q_table_to_dict(q_table):
         serialized[state_key] = [float(v) for v in q_values]
     return serialized
 
-# Step 63 - deserialize_q_table_from_dict (not yet solved)
-# TODO: implement
+# Step 63 - deserialize_q_table_from_dict
+def deserialize_q_table_from_dict(serialized):
+    """Convert plain dict with lists back to Q-table with numpy arrays."""
+    q_table = {}
+    for state_key, values in serialized.items():
+        # Convert list to numpy array with dtype float64
+        q_table[state_key] = np.array(values, dtype=np.float64)
+    return q_table
 
 # Step 64 - encode_board_flat_length_nine (not yet solved)
 # TODO: implement
