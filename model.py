@@ -320,8 +320,15 @@ def play_random_vs_random_game(rng):
         board = place_move(board, row, col, current_player)
         current_player = switch_player(current_player)
 
-# Step 21 - play_random_vs_random_matches (not yet solved)
-# TODO: implement
+# Step 21 - play_random_vs_random_matches
+# ── Step 021  play_random_vs_random_matches ──
+def play_random_vs_random_matches(n_games, rng):
+    """Run n_games random-vs-random games and return the list of outcome strings."""
+    outcomes = []
+    for _ in range(n_games):
+        outcome = play_random_vs_random_game(rng)
+        outcomes.append(outcome)
+    return outcomes
 
 # Step 22 - compute_outcome_rates (not yet solved)
 # TODO: implement
