@@ -923,8 +923,37 @@ def train_q_learning_agent(num_episodes, alpha, gamma, initial_epsilon, min_epsi
         'episode_outcomes': episode_outcomes
     }
 
-# Step 54 - compute_batched_outcome_stats (not yet solved)
-# TODO: implement
+# Step 54 - compute_batched_outcome_stats
+def compute_batched_outcome_stats(outcomes, batch_size):
+    """Aggregate outcomes into batches and compute win/loss/draw rates."""
+    # Initialize lists for results
+    batch_indices = []
+    win_rates = []
+    loss_rates = []
+    draw_rates = []
+    
+    # Process outcomes in chunks of batch_size
+    for i in range(0, len(outcomes) - batch_size + 1, batch_size):
+        batch = outcomes[i:i + batch_size]
+        
+        # Count outcomes
+        wins = sum(1 for outcome in batch if outcome == 'win')
+        losses = sum(1 for outcome in batch if outcome == 'loss')
+        draws = sum(1 for outcome in batch if outcome == 'draw')
+        
+        # Compute rates
+        batch_size_float = float(len(batch))
+        win_rates.append(wins / batch_size_float)
+        loss_rates.append(losses / batch_size_float)
+        draw_rates.append(draws / batch_size_float)
+        batch_indices.append(i // batch_size)
+    
+    return {
+        'batch_index': np.array(batch_indices),
+        'win_rate': np.array(win_rates),
+        'loss_rate': np.array(loss_rates),
+        'draw_rate': np.array(draw_rates)
+    }
 
 # Step 55 - self_play_episode (not yet solved)
 # TODO: implement
