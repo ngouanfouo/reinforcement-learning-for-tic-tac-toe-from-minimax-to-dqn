@@ -369,8 +369,21 @@ def minimax_terminal_score(status):
     else:
         raise ValueError(f"Invalid terminal status: {status}. Must be 'X_win', 'O_win', or 'draw'.")
 
-# Step 24 - minimax_value (not yet solved)
-# TODO: implement
+# Step 24 - minimax_value
+def minimax_value(board, player):
+    """Return the minimax value of `board` with `player` to move."""
+    status = get_game_status(board)
+    if status in ['X_win', 'O_win', 'draw']:
+        return minimax_terminal_score(status)
+    
+    legal_moves = get_legal_moves(board)
+    values = []
+    
+    for row, col in legal_moves:
+        next_board = place_move(board, row, col, player)
+        values.append(minimax_value(next_board, switch_player(player)))
+    
+    return max(values) if player == 1 else min(values)
 
 # Step 25 - minimax_recursive (not yet solved)
 # TODO: implement
