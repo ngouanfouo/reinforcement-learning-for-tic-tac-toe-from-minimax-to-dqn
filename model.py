@@ -1859,8 +1859,84 @@ def sarsa_on_policy_update(q_table, state_key, action, reward, next_state_key, n
     
     return q_table
 
-# Step 86 - train_sarsa_agent (not yet solved)
-# TODO: implement
+# Step 86 - train_sarsa_agent
+def train_sarsa_agent(num_episodes, alpha, gamma, initial_epsilon, min_epsilon, decay_rate, opponent_policy, rng):
+    """Train tabular SARSA agent against an opponent policy."""
+    q_table = initialize_q_table()
+    episode_outcomes = []
+    
+    for episode in range(num_episodes):
+        epsilon = epsilon_decay_schedule(initial_epsilon, episode, min_epsilon, decay_rate)
+        board, current_player = episode_reset_game()
+        done = False
+        
+        # Get initial agent action
+        state_key = canonical_board_key(board)
+        legal_actions = [r * 3 + c for r, c in get_legal_moves(board)]
+        agent_action = epsilon_greedy_select_action(q_table, state_key, legal_actions, epsilon, rng)
+        
+        while not done:
+            # Store current state and action for SARSA update
+            prev_state_key = state_key
+            prev_action = agent_action
+            
+            # Apply agent's move
+            row, col = agent_action // 3, agent_action % 3
+            board = place_move(board, row, col, current_player)
+            status = get_game_status(board)
+            done = status != 'ongoing'
+            
+            if done:
+                # Terminal after agent's move - update with reward only
+                reward = tic_tac_toe_reward(status, 1)  # Agent is X
+                sarsa_on_policy_update(q_table, prev_state_key, prev_action, 
+                                     reward, None, None, True, alpha, gamma)
+                episode_outcomes.append(status)
+                break
+            
+            # Opponent's turn
+            current_player = switch_player(current_player)
+            opponent_action = opponent_policy(board, current_player, rng)
+            
+            # Convert opponent action if needed
+            if isinstance(opponent_action, tuple):
+                opp_row, opp_col = opponent_action
+            else:
+                opp_row, opp_col = opponent_action // 3, opponent_action % 3
+            
+            # Apply opponent's move
+            board = place_move(board, opp_row, opp_col, current_player)
+            status = get_game_status(board)
+            done = status != 'ongoing'
+            
+            if done:
+                # Terminal after opponent's move - update with reward only
+                reward = tic_tac_toe_reward(status, 1)  # Agent is X
+                sarsa_on_policy_update(q_table, prev_state_key, prev_action,
+                                     reward, None, None, True, alpha, gamma)
+                episode_outcomes.append(status)
+                break
+            
+            # Get next state and agent's next action for SARSA update
+            current_player = switch_player(current_player)
+            next_state_key = canonical_board_key(board)
+            next_legal_actions = [r * 3 + c for r, c in get_legal_moves(board)]
+            next_action = epsilon_greedy_select_action(q_table, next_state_key, next_legal_actions, epsilon, rng)
+            
+            # Update Q-value for previous state-action pair using SARSA
+            # Reward is 0 for non-terminal transitions
+            reward = 0.0
+            sarsa_on_policy_update(q_table, prev_state_key, prev_action,
+                                 reward, next_state_key, next_action, False, alpha, gamma)
+            
+            # Prepare for next iteration
+            state_key = next_state_key
+            agent_action = next_action
+    
+    return {
+        'q_table': q_table,
+        'episode_outcomes': episode_outcomes
+    }
 
 # Step 87 - reinforce_log_prob_of_action (not yet solved)
 # TODO: implement
