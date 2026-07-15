@@ -751,8 +751,18 @@ def tic_tac_toe_reward(game_status, agent_player):
     else:
         return -1.0
 
-# Step 45 - q_learning_nonterminal_target (not yet solved)
-# TODO: implement
+# Step 45 - q_learning_nonterminal_target
+def q_learning_nonterminal_target(reward, gamma, q_table, next_state_key, legal_next_actions):
+    """Compute Q-learning TD target for non-terminal transition."""
+    # If there are no legal next actions, bootstrap term is 0
+    if not legal_next_actions:
+        return float(reward)
+    
+    # Find max Q-value among legal next actions
+    max_q = max(get_q_value(q_table, next_state_key, action) for action in legal_next_actions)
+    
+    # Return r + gamma * max_a' Q(s', a')
+    return reward + gamma * max_q
 
 # Step 46 - q_learning_terminal_target (not yet solved)
 # TODO: implement
