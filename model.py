@@ -356,8 +356,18 @@ def compute_outcome_rates(outcomes):
         'draw_rate': float(draws / total_games)
     }
 
-# Step 23 - minimax_terminal_score (not yet solved)
-# TODO: implement
+# Step 23 - minimax_terminal_score
+# ── Step 023  minimax_terminal_score ──
+def minimax_terminal_score(status):
+    """Return +1 for 'X_win', -1 for 'O_win', 0 for 'draw'."""
+    if status == 'X_win':
+        return 1
+    elif status == 'O_win':
+        return -1
+    elif status == 'draw':
+        return 0
+    else:
+        raise ValueError(f"Invalid terminal status: {status}. Must be 'X_win', 'O_win', or 'draw'.")
 
 # Step 24 - minimax_value (not yet solved)
 # TODO: implement
