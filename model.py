@@ -1181,8 +1181,39 @@ def evaluate_q_agent_vs_minimax(q_table, num_games, rng):
     
     return compute_outcome_rates(outcomes)
 
-# Step 61 - inspect_q_values_for_state (not yet solved)
-# TODO: implement
+# Step 61 - inspect_q_values_for_state
+def inspect_q_values_for_state(q_table, board, current_player):
+    """Print board and Q-values, return Q-values as numpy array."""
+    # Print the board
+    print_board(board)
+    
+    # Get canonical state key
+    state_key = canonical_board_key(board)
+    
+    # Look up Q-values for all 9 cells
+    q_values = []
+    for row in range(3):
+        for col in range(3):
+            # Check if cell is legal (empty)
+            if board[row, col] == 0:
+                # Legal move - get Q-value
+                action = (row, col)
+                q_val = get_q_value(q_table, state_key, action)
+            else:
+                # Illegal move - display as 0.00
+                q_val = 0.0
+            q_values.append(q_val)
+    
+    # Print Q-values in a 3x3 grid
+    for row in range(3):
+        row_values = []
+        for col in range(3):
+            q_val = q_values[row * 3 + col]
+            row_values.append(f"{q_val:+.2f}")
+        print(" ".join(row_values))
+    
+    # Return as numpy array of shape (9,)
+    return np.array(q_values, dtype=float)
 
 # Step 62 - serialize_q_table_to_dict (not yet solved)
 # TODO: implement
