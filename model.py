@@ -2339,6 +2339,61 @@ def compare_value_vs_policy_learners(num_episodes=1000, eval_games=100, seed=42,
         }
     }
 
-# Step 92 - symmetry_augmented_training (not yet solved)
-# TODO: implement
+# Step 92 - symmetry_augmented_training
+def symmetry_augmented_training(q_table, state_board, action, reward, next_state_board, done, alpha, gamma):
+    """Apply Q-learning updates to all 8 D4 symmetries of a transition."""
+    # Convert flat action to (row, col)
+    action_row = action // 3
+    action_col = action % 3
+    
+    # Define the 8 D4 symmetry transformations
+    sym_funcs = [
+        # Rotations
+        lambda r, c: (r, c),                          # 0° (identity)
+        lambda r, c: (c, 2 - r),                      # 90° clockwise
+        lambda r, c: (2 - r, 2 - c),                  # 180°
+        lambda r, c: (2 - c, r),                      # 270° clockwise
+        # Reflections
+        lambda r, c: (r, 2 - c),                      # horizontal flip
+        lambda r, c: (2 - r, c),                      # vertical flip
+        lambda r, c: (c, r),                          # main diagonal transpose
+        lambda r, c: (2 - c, 2 - r),                  # anti-diagonal transpose
+    ]
+    
+    # For each symmetry
+    for sym_func in sym_funcs:
+        # Transform the state board
+        transformed_state_board = np.zeros_like(state_board)
+        for r in range(3):
+            for c in range(3):
+                new_r, new_c = sym_func(r, c)
+                transformed_state_board[new_r, new_c] = state_board[r, c]
+        
+        # Transform the next state board
+        transformed_next_board = np.zeros_like(next_state_board)
+        for r in range(3):
+            for c in range(3):
+                new_r, new_c = sym_func(r, c)
+                transformed_next_board[new_r, new_c] = next_state_board[r, c]
+        
+        # Transform the action
+        transformed_r, transformed_c = sym_func(action_row, action_col)
+        transformed_action = transformed_r * 3 + transformed_c
+        
+        # Use encode_board_state_key (not canonical) to preserve distinct symmetries
+        state_key = encode_board_state_key(transformed_state_board)
+        
+        # Compute TD target
+        if done:
+            target = q_learning_terminal_target(reward)
+        else:
+            next_state_key = encode_board_state_key(transformed_next_board)
+            legal_next_moves = get_legal_moves(transformed_next_board)
+            legal_next_actions = [r * 3 + c for r, c in legal_next_moves]
+            target = q_learning_nonterminal_target(reward, gamma, q_table, next_state_key, legal_next_actions)
+        
+        # Apply Q-learning update
+        q_learning_update(q_table, state_key, transformed_action, target, alpha)
+    
+    return q_table
 
