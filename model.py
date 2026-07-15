@@ -784,8 +784,12 @@ def q_learning_update(q_table, state_key, action, target, alpha):
     
     return new_q
 
-# Step 48 - episode_reset_game (not yet solved)
-# TODO: implement
+# Step 48 - episode_reset_game
+def episode_reset_game():
+    """Start a fresh training episode. Return (empty_board, first_player)."""
+    board = create_empty_board()
+    first_player = 1  # X always starts
+    return board, first_player
 
 # Step 49 - episode_agent_pick_action (not yet solved)
 # TODO: implement
