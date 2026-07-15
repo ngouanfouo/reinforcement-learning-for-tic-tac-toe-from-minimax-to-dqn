@@ -1471,8 +1471,40 @@ def cap_buffer_size_drop_oldest(buffer):
         buffer['data'].pop(0)  # pop(0) removes the first element from a list
     return buffer
 
-# Step 77 - sample_minibatch_from_buffer (not yet solved)
-# TODO: implement
+# Step 77 - sample_minibatch_from_buffer
+def sample_minibatch_from_buffer(buffer, batch_size, rng):
+    """Sample a random minibatch from the replay buffer and stack fields."""
+    # Get all transitions from the buffer
+    data = buffer['data']
+    
+    # Randomly sample indices with replacement
+    indices = rng.integers(0, len(data), size=batch_size)
+    
+    # Collect fields
+    states = []
+    actions = []
+    rewards = []
+    next_states = []
+    dones = []
+    next_legal_masks = []
+    
+    for idx in indices:
+        trans = data[idx]
+        states.append(trans['state'])
+        actions.append(trans['action'])
+        rewards.append(trans['reward'])
+        next_states.append(trans['next_state'])
+        dones.append(trans['done'])
+        next_legal_masks.append(trans['next_legal_mask'])
+    
+    return {
+        'states': np.array(states),
+        'actions': np.array(actions),
+        'rewards': np.array(rewards),
+        'next_states': np.array(next_states),
+        'dones': np.array(dones),
+        'next_legal_masks': np.array(next_legal_masks)
+    }
 
 # Step 78 - build_target_network_copy (not yet solved)
 # TODO: implement
