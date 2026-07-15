@@ -838,8 +838,18 @@ def episode_apply_action(board, action, player, agent_player):
         'done': done
     }
 
-# Step 51 - episode_apply_q_update (not yet solved)
-# TODO: implement
+# Step 51 - episode_apply_q_update
+def episode_apply_q_update(q_table, state_key, action, reward, next_board, done, alpha, gamma):
+    """Apply Q-learning update for a transition and return new Q-value."""
+    if done:
+        target = q_learning_terminal_target(reward)
+    else:
+        next_state_key = canonical_board_key(next_board)
+        legal_next_moves = get_legal_moves(next_board)  # This returns tuples
+        target = q_learning_nonterminal_target(reward, gamma, q_table, next_state_key, legal_next_moves)
+    
+    new_q = q_learning_update(q_table, state_key, action, target, alpha)
+    return new_q
 
 # Step 52 - episode_check_terminate (not yet solved)
 # TODO: implement
