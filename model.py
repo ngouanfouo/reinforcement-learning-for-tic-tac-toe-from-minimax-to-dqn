@@ -474,8 +474,68 @@ def minimax_best_move(board, player):
     _, best_move = minimax_max_min_step(board, player)
     return best_move
 
-# Step 28 - minimax_alpha_beta (not yet solved)
-# TODO: implement
+# Step 28 - minimax_alpha_beta
+def minimax_alpha_beta(board, player, alpha, beta):
+    """Return (score, move) for `player` using alpha-beta pruning."""
+    # Check if terminal state
+    status = get_game_status(board)
+    if status != 'ongoing':
+        return (minimax_terminal_score(status), None)
+    
+    # Get legal moves
+    legal_moves = get_legal_moves(board)
+    
+    if player == 1:  # X is maximizer
+        best_score = -float('inf')
+        best_move = None
+        
+        for row, col in legal_moves:
+            # Simulate the move
+            next_board = place_move(board, row, col, player)
+            next_player = switch_player(player)
+            
+            # Recurse with alpha-beta
+            score, _ = minimax_alpha_beta(next_board, next_player, alpha, beta)
+            
+            # Update best if score is better
+            if score > best_score:
+                best_score = score
+                best_move = (row, col)
+            
+            # Update alpha
+            alpha = max(alpha, best_score)
+            
+            # Prune if alpha >= beta
+            if alpha >= beta:
+                break
+                
+        return (best_score, best_move)
+    
+    else:  # O is minimizer (player == -1)
+        best_score = float('inf')
+        best_move = None
+        
+        for row, col in legal_moves:
+            # Simulate the move
+            next_board = place_move(board, row, col, player)
+            next_player = switch_player(player)
+            
+            # Recurse with alpha-beta
+            score, _ = minimax_alpha_beta(next_board, next_player, alpha, beta)
+            
+            # Update best if score is better
+            if score < best_score:
+                best_score = score
+                best_move = (row, col)
+            
+            # Update beta
+            beta = min(beta, best_score)
+            
+            # Prune if alpha >= beta
+            if alpha >= beta:
+                break
+                
+        return (best_score, best_move)
 
 # Step 29 - play_minimax_vs_random_matches (not yet solved)
 # TODO: implement
