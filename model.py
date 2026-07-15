@@ -851,8 +851,10 @@ def episode_apply_q_update(q_table, state_key, action, reward, next_board, done,
     new_q = q_learning_update(q_table, state_key, action, target, alpha)
     return new_q
 
-# Step 52 - episode_check_terminate (not yet solved)
-# TODO: implement
+# Step 52 - episode_check_terminate
+def episode_check_terminate(game_status):
+    """Return True if game_status is terminal, False otherwise."""
+    return game_status != 'ongoing'
 
 # Step 53 - train_q_learning_agent (not yet solved)
 # TODO: implement
