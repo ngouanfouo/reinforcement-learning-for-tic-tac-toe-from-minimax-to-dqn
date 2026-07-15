@@ -1719,8 +1719,125 @@ def train_dqn_agent(num_episodes=10000, hidden_dim=64, gamma=0.99, lr=1e-3,
         'architecture': arch
     }
 
-# Step 84 - compare_dqn_tabular_random_minimax (not yet solved)
-# TODO: implement
+# Step 84 - compare_dqn_tabular_random_minimax
+def compare_dqn_tabular_random_minimax(dqn_artifacts, q_table, num_games=200, seed=42):
+    """Round-robin evaluation among DQN, tabular Q, random, and minimax agents."""
+    rng = np.random.default_rng(seed)
+    online_params = dqn_artifacts['online_params']
+    
+    def play_game(agent1, agent2, agent1_is_x):
+        """Play one game between two agents."""
+        board = create_empty_board()
+        current_player = 1  # X starts
+        done = False
+        
+        while not done:
+            # Determine which agent moves
+            if (current_player == 1 and agent1_is_x) or (current_player == -1 and not agent1_is_x):
+                # Agent 1's turn
+                if agent1 == 'dqn':
+                    # DQN agent
+                    state = encode_board_flat_length_nine(board, current_player)
+                    legal_moves = get_legal_moves(board)
+                    legal_mask = np.zeros(9, dtype=bool)
+                    for row, col in legal_moves:
+                        legal_mask[row * 3 + col] = True
+                    action = dqn_select_action(online_params, state, legal_mask, 0.0, rng)
+                elif agent1 == 'tabular':
+                    # Tabular Q agent
+                    state_key = canonical_board_key(board)
+                    legal_moves = get_legal_moves(board)
+                    legal_actions = [row * 3 + col for row, col in legal_moves]
+                    action = epsilon_greedy_select_action(q_table, state_key, legal_actions, 0.0, rng)
+                elif agent1 == 'random':
+                    # Random agent
+                    action = random_move_agent(board, current_player, rng)
+                    if isinstance(action, tuple):
+                        action = action[0] * 3 + action[1]
+                else:  # minimax
+                    _, move = minimax_alpha_beta(board, current_player, -10, 10)
+                    if move is None:
+                        action = 0  # Shouldn't happen in non-terminal state
+                    else:
+                        action = move[0] * 3 + move[1]
+            else:
+                # Agent 2's turn
+                if agent2 == 'dqn':
+                    state = encode_board_flat_length_nine(board, current_player)
+                    legal_moves = get_legal_moves(board)
+                    legal_mask = np.zeros(9, dtype=bool)
+                    for row, col in legal_moves:
+                        legal_mask[row * 3 + col] = True
+                    action = dqn_select_action(online_params, state, legal_mask, 0.0, rng)
+                elif agent2 == 'tabular':
+                    state_key = canonical_board_key(board)
+                    legal_moves = get_legal_moves(board)
+                    legal_actions = [row * 3 + col for row, col in legal_moves]
+                    action = epsilon_greedy_select_action(q_table, state_key, legal_actions, 0.0, rng)
+                elif agent2 == 'random':
+                    action = random_move_agent(board, current_player, rng)
+                    if isinstance(action, tuple):
+                        action = action[0] * 3 + action[1]
+                else:  # minimax
+                    _, move = minimax_alpha_beta(board, current_player, -10, 10)
+                    if move is None:
+                        action = 0
+                    else:
+                        action = move[0] * 3 + move[1]
+            
+            # Apply action
+            row, col = action // 3, action % 3
+            board = place_move(board, row, col, current_player)
+            status = get_game_status(board)
+            done = status != 'ongoing'
+            
+            if done:
+                # Determine winner from agent1's perspective
+                if status == 'draw':
+                    return 'draw'
+                elif (status == 'X_win' and agent1_is_x) or (status == 'O_win' and not agent1_is_x):
+                    return 'win'
+                else:
+                    return 'loss'
+            
+            current_player = switch_player(current_player)
+        
+        return 'draw'  # Fallback
+    
+    def evaluate_matchup(agent1, agent2):
+        """Evaluate one matchup between two agents."""
+        wins = 0
+        draws = 0
+        losses = 0
+        
+        for game_idx in range(num_games):
+            # Alternate who plays X
+            agent1_is_x = (game_idx % 2 == 0)
+            result = play_game(agent1, agent2, agent1_is_x)
+            
+            if result == 'win':
+                wins += 1
+            elif result == 'draw':
+                draws += 1
+            else:
+                losses += 1
+        
+        return {
+            'wins': wins / num_games,
+            'draws': draws / num_games,
+            'losses': losses / num_games
+        }
+    
+    # Run all matchups
+    results = {}
+    results['dqn_vs_random'] = evaluate_matchup('dqn', 'random')
+    results['dqn_vs_minimax'] = evaluate_matchup('dqn', 'minimax')
+    results['dqn_vs_tabular'] = evaluate_matchup('dqn', 'tabular')
+    results['tabular_vs_random'] = evaluate_matchup('tabular', 'random')
+    results['tabular_vs_minimax'] = evaluate_matchup('tabular', 'minimax')
+    results['random_vs_minimax'] = evaluate_matchup('random', 'minimax')
+    
+    return results
 
 # Step 85 - sarsa_on_policy_update (not yet solved)
 # TODO: implement
