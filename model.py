@@ -1135,8 +1135,51 @@ def evaluate_q_agent_vs_random(q_table, num_games, rng):
         'draw_rate': draws / num_games
     }
 
-# Step 60 - evaluate_q_agent_vs_minimax (not yet solved)
-# TODO: implement
+# Step 60 - evaluate_q_agent_vs_minimax
+def evaluate_q_agent_vs_minimax(q_table, num_games, rng):
+    """Evaluate Q-agent against optimal minimax opponent."""
+    outcomes = []
+    
+    for game_idx in range(num_games):
+        # Alternate who plays first
+        agent_is_x = (game_idx % 2 == 0)
+        
+        board = create_empty_board()
+        current_player = 1
+        done = False
+        
+        while not done:
+            is_agent_turn = (current_player == 1 and agent_is_x) or (current_player == -1 and not agent_is_x)
+            
+            if is_agent_turn:
+                # Agent's turn
+                state_key = canonical_board_key(board)
+                legal_moves = get_legal_moves(board)
+                legal_actions = [row * 3 + col for row, col in legal_moves]
+                action = epsilon_greedy_select_action(q_table, state_key, legal_actions, 0.0, rng)
+                row, col = action // 3, action % 3
+                board = place_move(board, row, col, current_player)
+            else:
+                # Minimax opponent's turn
+                _, move = minimax_alpha_beta(board, current_player, -10, 10)
+                row, col = move
+                board = place_move(board, row, col, current_player)
+            
+            status = get_game_status(board)
+            if status != 'ongoing':
+                done = True
+                # Record from agent's perspective
+                if status == 'draw':
+                    outcomes.append('draw')
+                elif (status == 'X_win' and agent_is_x) or (status == 'O_win' and not agent_is_x):
+                    outcomes.append('X_win')  # Agent won
+                else:
+                    outcomes.append('O_win')  # Agent lost
+                break
+            
+            current_player = switch_player(current_player)
+    
+    return compute_outcome_rates(outcomes)
 
 # Step 61 - inspect_q_values_for_state (not yet solved)
 # TODO: implement
