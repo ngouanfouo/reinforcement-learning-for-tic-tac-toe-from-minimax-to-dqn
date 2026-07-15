@@ -1275,8 +1275,35 @@ def build_mlp_architecture(input_dim, hidden_dim, output_dim=9):
         'output_dim': output_dim
     }
 
-# Step 67 - initialize_mlp_parameters (not yet solved)
-# TODO: implement
+# Step 67 - initialize_mlp_parameters
+def initialize_mlp_parameters(arch, seed=0):
+    """Initialize MLP parameters with He initialization and zero biases."""
+    # Set seed for reproducibility
+    np.random.seed(seed)
+    
+    input_dim = arch['input_dim']
+    hidden_dim = arch['hidden_dim']
+    output_dim = arch['output_dim']
+    
+    # He initialization for weights: scaled Gaussian with std = sqrt(2/fan_in)
+    # W1: input_dim x hidden_dim
+    std1 = np.sqrt(2.0 / input_dim)
+    W1 = np.random.randn(input_dim, hidden_dim) * std1
+    
+    # W2: hidden_dim x output_dim
+    std2 = np.sqrt(2.0 / hidden_dim)
+    W2 = np.random.randn(hidden_dim, output_dim) * std2
+    
+    # Biases initialized to zero
+    b1 = np.zeros(hidden_dim)
+    b2 = np.zeros(output_dim)
+    
+    return {
+        'W1': W1,
+        'b1': b1,
+        'W2': W2,
+        'b2': b2
+    }
 
 # Step 68 - mlp_forward_pass (not yet solved)
 # TODO: implement
