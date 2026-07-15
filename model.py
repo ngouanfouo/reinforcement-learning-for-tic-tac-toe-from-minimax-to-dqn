@@ -617,8 +617,30 @@ def encode_board_state_key(board):
     # Flatten board in row-major order and map each value
     return ''.join(mapping[cell] for row in board for cell in row)
 
-# Step 32 - canonical_board_key (not yet solved)
-# TODO: implement
+# Step 32 - canonical_board_key
+def canonical_board_key(board):
+    """Return canonical string for board, same across all rotations/reflections."""
+    # Generate all 8 symmetric variants
+    variants = []
+    
+    # Original board
+    variants.append(board)
+    
+    # Rotations: 90°, 180°, 270°
+    variants.append(np.rot90(board, 1))
+    variants.append(np.rot90(board, 2))
+    variants.append(np.rot90(board, 3))
+    
+    # Reflections: horizontal, vertical, main diagonal, anti-diagonal
+    variants.append(np.fliplr(board))  # horizontal reflection
+    variants.append(np.flipud(board))  # vertical reflection
+    variants.append(board.T)  # transpose (main diagonal reflection)
+    variants.append(np.rot90(board.T, 2))  # anti-diagonal reflection (transpose + 180° rotation)
+    
+    # Convert each variant to string and pick the lexicographically smallest
+    canonical = min(encode_board_state_key(variant) for variant in variants)
+    
+    return canonical
 
 # Step 33 - initialize_q_table (not yet solved)
 # TODO: implement
