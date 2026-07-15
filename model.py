@@ -432,8 +432,39 @@ def minimax_recursive(board, player):
     minimax_recursive.cache[key] = value
     return value
 
-# Step 26 - minimax_max_min_step (not yet solved)
-# TODO: implement
+# Step 26 - minimax_max_min_step
+def minimax_max_min_step(board, player):
+    """Perform one minimax search level and return (best_score, best_move)."""
+    # Get all legal moves
+    legal_moves = get_legal_moves(board)
+    
+    # Initialize best values
+    best_score = None
+    best_move = None
+    
+    # Iterate through each legal move
+    for row, col in legal_moves:
+        # Simulate playing the move
+        next_board = place_move(board, row, col, player)
+        next_player = switch_player(player)
+        
+        # Score the resulting position using minimax_recursive
+        score = minimax_recursive(next_board, next_player)
+        
+        # Update best based on player type
+        if best_score is None:
+            best_score = score
+            best_move = (row, col)
+        elif player == 1:  # X is maximizer
+            if score > best_score:
+                best_score = score
+                best_move = (row, col)
+        else:  # O is minimizer (player == -1)
+            if score < best_score:
+                best_score = score
+                best_move = (row, col)
+    
+    return (best_score, best_move)
 
 # Step 27 - minimax_best_move (not yet solved)
 # TODO: implement
