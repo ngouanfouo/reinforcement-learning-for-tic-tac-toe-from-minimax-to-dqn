@@ -1062,8 +1062,78 @@ def train_q_agent_self_play(num_episodes, alpha, gamma, initial_epsilon, min_eps
         'episode_outcomes': episode_outcomes
     }
 
-# Step 59 - evaluate_q_agent_vs_random (not yet solved)
-# TODO: implement
+# Step 59 - evaluate_q_agent_vs_random
+def evaluate_q_agent_vs_random(q_table, num_games, rng):
+    """Play num_games between the greedy Q-agent and a random opponent."""
+    wins = 0
+    losses = 0
+    draws = 0
+    
+    for game_idx in range(num_games):
+        # Alternate who plays first: even games agent is X, odd games agent is O
+        agent_is_x = (game_idx % 2 == 0)
+        
+        board = create_empty_board()
+        current_player = 1  # X starts
+        done = False
+        
+        while not done:
+            # Determine if it's agent's turn
+            is_agent_turn = (current_player == 1 and agent_is_x) or (current_player == -1 and not agent_is_x)
+            
+            if is_agent_turn:
+                # Agent's turn - use greedy policy (epsilon=0)
+                state_key = canonical_board_key(board)
+                legal_moves = get_legal_moves(board)
+                legal_actions = [row * 3 + col for row, col in legal_moves]
+                
+                # Greedy selection (epsilon=0)
+                action = epsilon_greedy_select_action(q_table, state_key, legal_actions, 0.0, rng)
+                row, col = action // 3, action % 3
+                board = place_move(board, row, col, current_player)
+            else:
+                # Random opponent's turn
+                legal_moves = get_legal_moves(board)
+                row, col = random_move_agent(board, current_player, rng)
+                board = place_move(board, row, col, current_player)
+            
+            # Check game status
+            status = get_game_status(board)
+            if status != 'ongoing':
+                done = True
+                
+                # Tally from agent's perspective
+                agent_player = 1 if agent_is_x else -1
+                if status == 'draw':
+                    draws += 1
+                elif (status == 'X_win' and agent_player == 1) or (status == 'O_win' and agent_player == -1):
+                    wins += 1
+                else:
+                    losses += 1
+                
+                break
+            
+            current_player = switch_player(current_player)
+    
+    # Compute rates
+    if num_games == 0:
+        return {
+            'wins': 0,
+            'losses': 0,
+            'draws': 0,
+            'win_rate': 0.0,
+            'loss_rate': 0.0,
+            'draw_rate': 0.0
+        }
+    
+    return {
+        'wins': wins,
+        'losses': losses,
+        'draws': draws,
+        'win_rate': wins / num_games,
+        'loss_rate': losses / num_games,
+        'draw_rate': draws / num_games
+    }
 
 # Step 60 - evaluate_q_agent_vs_minimax (not yet solved)
 # TODO: implement
