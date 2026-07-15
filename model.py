@@ -1594,8 +1594,130 @@ def dqn_train_step(online_params, target_params, adam_state, buffer, batch_size,
     
     return online_params, adam_state, loss
 
-# Step 83 - train_dqn_agent (not yet solved)
-# TODO: implement
+# Step 83 - train_dqn_agent
+def train_dqn_agent(num_episodes=10000, hidden_dim=64, gamma=0.99, lr=1e-3, 
+                   batch_size=64, buffer_capacity=10000, sync_every_k=1000,
+                   epsilon_start=1.0, epsilon_end=0.01, seed=42):
+    """Full DQN self-play training loop for Tic-Tac-Toe."""
+    # Set seed for reproducibility
+    np.random.seed(seed)
+    rng = np.random.default_rng(seed)
+    
+    # Build architecture and initialize parameters
+    arch = build_mlp_architecture(9, hidden_dim)
+    online_params = initialize_mlp_parameters(arch, seed=seed)
+    target_params = build_target_network_copy(online_params)
+    
+    # Initialize Adam state
+    adam_state = {}
+    
+    # Create replay buffer
+    buffer = create_replay_buffer(buffer_capacity)
+    
+    # Training history
+    loss_history = []
+    reward_history = []
+    
+    # Epsilon decay: linear from epsilon_start to epsilon_end
+    total_steps = num_episodes * 9  # Max 9 moves per episode
+    
+    for episode in range(num_episodes):
+        # Reset game
+        board = create_empty_board()
+        current_player = 1  # X starts
+        done = False
+        episode_reward = 0.0
+        steps_in_episode = 0
+        episode_losses = []  # Track losses within this episode
+        
+        while not done:
+            # Compute current epsilon (linear decay over all steps)
+            step_count = episode * 9 + steps_in_episode
+            epsilon = epsilon_start + (epsilon_end - epsilon_start) * (step_count / total_steps)
+            epsilon = max(epsilon_end, min(epsilon_start, epsilon))
+            
+            # Encode state from current player's perspective
+            state = encode_board_flat_length_nine(board, current_player)
+            
+            # Get legal moves and mask
+            legal_moves = get_legal_moves(board)
+            legal_mask = np.zeros(9, dtype=bool)
+            for row, col in legal_moves:
+                legal_mask[row * 3 + col] = True
+            
+            # Select action using DQN
+            action = dqn_select_action(online_params, state, legal_mask, epsilon, rng)
+            
+            # Apply action
+            row, col = action // 3, action % 3
+            next_board = place_move(board, row, col, current_player)
+            status = get_game_status(next_board)
+            done = status != 'ongoing'
+            
+            # Get reward from current player's perspective
+            reward = tic_tac_toe_reward(status, current_player)
+            
+            # Encode next state
+            next_state = encode_board_flat_length_nine(next_board, current_player)
+            
+            # Get legal mask for next state
+            if not done:
+                next_legal_moves = get_legal_moves(next_board)
+                next_legal_mask = np.zeros(9, dtype=bool)
+                for r, c in next_legal_moves:
+                    next_legal_mask[r * 3 + c] = True
+            else:
+                next_legal_mask = np.zeros(9, dtype=bool)
+            
+            # Store transition in buffer
+            transition = {
+                'state': state,
+                'action': action,
+                'reward': reward,
+                'next_state': next_state,
+                'done': done,
+                'next_legal_mask': next_legal_mask
+            }
+            buffer['data'].append(transition)
+            
+            # Track reward
+            episode_reward += reward
+            
+            # Train if buffer has enough samples
+            if len(buffer['data']) >= batch_size:
+                # Sample minibatch and train
+                online_params, adam_state, loss = dqn_train_step(
+                    online_params, target_params, adam_state, buffer,
+                    batch_size, gamma, lr, rng
+                )
+                episode_losses.append(loss)
+                
+                # Sync target network periodically
+                step_idx = episode * 9 + steps_in_episode
+                if step_idx > 0 and step_idx % sync_every_k == 0:
+                    target_params = build_target_network_copy(online_params)
+            
+            # Update board and player
+            board = next_board
+            current_player = switch_player(current_player)
+            steps_in_episode += 1
+        
+        # Store episode loss (average of losses in this episode, or 0 if none)
+        if episode_losses:
+            loss_history.append(np.mean(episode_losses))
+        else:
+            loss_history.append(0.0)
+        
+        # Store episode reward
+        reward_history.append(episode_reward)
+    
+    return {
+        'online_params': online_params,
+        'target_params': target_params,
+        'loss_history': loss_history,
+        'reward_history': reward_history,
+        'architecture': arch
+    }
 
 # Step 84 - compare_dqn_tabular_random_minimax (not yet solved)
 # TODO: implement
