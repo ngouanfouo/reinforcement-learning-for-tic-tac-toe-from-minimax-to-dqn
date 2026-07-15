@@ -575,8 +575,38 @@ def play_minimax_vs_random_matches(n_games, minimax_plays_x, rng):
     
     return compute_outcome_rates(outcomes)
 
-# Step 30 - play_minimax_vs_minimax_matches (not yet solved)
-# TODO: implement
+# Step 30 - play_minimax_vs_minimax_matches
+def play_minimax_vs_minimax_matches(n_games):
+    """Run n_games between two minimax players, return outcome rates and draw flag."""
+    outcomes = []
+    
+    for _ in range(n_games):
+        # Start with empty board
+        board = create_empty_board()
+        current_player = 1  # X starts
+        
+        while True:
+            status = get_game_status(board)
+            if status in ['X_win', 'O_win', 'draw']:
+                outcomes.append(status)
+                break
+            
+            # Both players use minimax with alpha-beta pruning
+            # Use wide alpha-beta bounds (-10, 10)
+            _, move = minimax_alpha_beta(board, current_player, -10, 10)
+            row, col = move
+            
+            # Place the move and switch player
+            board = place_move(board, row, col, current_player)
+            current_player = switch_player(current_player)
+    
+    # Compute outcome rates
+    rates = compute_outcome_rates(outcomes)
+    
+    # Check if all games were draws
+    rates['all_draws'] = all(status == 'draw' for status in outcomes)
+    
+    return rates
 
 # Step 31 - encode_board_state_key (not yet solved)
 # TODO: implement
