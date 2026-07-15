@@ -856,8 +856,72 @@ def episode_check_terminate(game_status):
     """Return True if game_status is terminal, False otherwise."""
     return game_status != 'ongoing'
 
-# Step 53 - train_q_learning_agent (not yet solved)
-# TODO: implement
+# Step 53 - train_q_learning_agent
+def train_q_learning_agent(num_episodes, alpha, gamma, initial_epsilon, min_epsilon, decay_rate, opponent_policy, rng):
+    """Train tabular Q-learning agent against an opponent policy."""
+    q_table = initialize_q_table()
+    episode_outcomes = []
+    
+    for episode in range(num_episodes):
+        epsilon = epsilon_decay_schedule(initial_epsilon, episode, min_epsilon, decay_rate)
+        board, current_player = episode_reset_game()
+        done = False
+        
+        while not done:
+            # Agent's turn (always X, player=1)
+            state_key = canonical_board_key(board)
+            legal_moves = get_legal_moves(board)
+            legal_actions = [r * 3 + c for r, c in legal_moves]
+            action = epsilon_greedy_select_action(q_table, state_key, legal_actions, epsilon, rng)
+            
+            # Store agent's state and action for later update
+            agent_state_key = state_key
+            agent_action = action
+            
+            # Apply agent's move
+            row, col = action // 3, action % 3
+            board = place_move(board, row, col, current_player)
+            status = get_game_status(board)
+            done = status != 'ongoing'
+            
+            if done:
+                # Terminal after agent's move
+                reward = tic_tac_toe_reward(status, 1)
+                episode_apply_q_update(q_table, agent_state_key, agent_action,
+                                     reward, board, True, alpha, gamma)
+                episode_outcomes.append(status)
+                break
+            
+            # Opponent's turn
+            current_player = switch_player(current_player)
+            opponent_action = opponent_policy(board, current_player, rng)
+            
+            # Convert opponent action if needed
+            if isinstance(opponent_action, tuple):
+                opp_row, opp_col = opponent_action
+            else:
+                opp_row, opp_col = opponent_action // 3, opponent_action % 3
+            
+            # Apply opponent's move
+            board = place_move(board, opp_row, opp_col, current_player)
+            status = get_game_status(board)
+            done = status != 'ongoing'
+            reward = tic_tac_toe_reward(status, 1)
+            
+            # Update Q-value for agent's previous move using the new state
+            episode_apply_q_update(q_table, agent_state_key, agent_action,
+                                 reward, board, done, alpha, gamma)
+            
+            if done:
+                episode_outcomes.append(status)
+                break
+            
+            current_player = switch_player(current_player)
+    
+    return {
+        'q_table': q_table,
+        'episode_outcomes': episode_outcomes
+    }
 
 # Step 54 - compute_batched_outcome_stats (not yet solved)
 # TODO: implement
