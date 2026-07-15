@@ -1021,8 +1021,46 @@ def perspective_reward_sign(reward, scoring_player, acting_player):
     else:
         return -reward
 
-# Step 58 - train_q_agent_self_play (not yet solved)
-# TODO: implement
+# Step 58 - train_q_agent_self_play
+def train_q_agent_self_play(num_episodes, alpha, gamma, initial_epsilon, min_epsilon, decay_rate, rng):
+    """Train Q-agent through self-play episodes."""
+    q_table = initialize_q_table()
+    episode_outcomes = []
+    
+    for episode in range(num_episodes):
+        epsilon = epsilon_decay_schedule(initial_epsilon, episode, min_epsilon, decay_rate)
+        
+        # Run one self-play episode
+        episode_data = self_play_episode(q_table, alpha, gamma, epsilon, rng)
+        episode_outcomes.append(episode_data['final_status'])
+        
+        # Process transitions in reverse order (backwards through the episode)
+        for trans in reversed(episode_data['transitions']):
+            state_key = trans['state_key']
+            action = trans['action']
+            reward = trans['reward']
+            next_board = trans['next_board']
+            done = trans['done']
+            player = trans['player']
+            
+            # Flip next board to the player's perspective for target computation
+            flipped_next_board = flip_board_perspective(next_board, player)
+            flipped_next_state_key = canonical_board_key(flipped_next_board)
+            
+            # Compute TD target
+            if done:
+                target = q_learning_terminal_target(reward)
+            else:
+                legal_next_actions = [r * 3 + c for r, c in get_legal_moves(flipped_next_board)]
+                target = q_learning_nonterminal_target(0.0, gamma, q_table, flipped_next_state_key, legal_next_actions)
+            
+            # Update Q-value
+            q_learning_update(q_table, state_key, action, target, alpha)
+    
+    return {
+        'q_table': q_table,
+        'episode_outcomes': episode_outcomes
+    }
 
 # Step 59 - evaluate_q_agent_vs_random (not yet solved)
 # TODO: implement
