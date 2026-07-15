@@ -1013,8 +1013,13 @@ def flip_board_perspective(board, player):
     
     return flipped
 
-# Step 57 - perspective_reward_sign (not yet solved)
-# TODO: implement
+# Step 57 - perspective_reward_sign
+def perspective_reward_sign(reward, scoring_player, acting_player):
+    """Re-express reward from acting player's perspective."""
+    if scoring_player == acting_player:
+        return reward
+    else:
+        return -reward
 
 # Step 58 - train_q_agent_self_play (not yet solved)
 # TODO: implement
