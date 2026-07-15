@@ -678,8 +678,11 @@ def choose_initial_epsilon():
     # TODO: return the starting exploration rate in [0, 1] favoring exploration
     return 1.0
 
-# Step 39 - epsilon_decay_schedule (not yet solved)
-# TODO: implement
+# Step 39 - epsilon_decay_schedule
+def epsilon_decay_schedule(initial_epsilon, episode_index, min_epsilon, decay_rate):
+    """Compute epsilon using exponential decay clipped to min_epsilon."""
+    epsilon = initial_epsilon * np.exp(-decay_rate * episode_index)
+    return max(min_epsilon, epsilon)
 
 # Step 40 - epsilon_greedy_explore_move (not yet solved)
 # TODO: implement
