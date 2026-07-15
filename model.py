@@ -1242,8 +1242,29 @@ def encode_board_flat_length_nine(board, current_player):
     # Flatten to shape (9,)
     return flipped_board.flatten().astype(np.float32)
 
-# Step 65 - encode_board_one_hot_length_eighteen (not yet solved)
-# TODO: implement
+# Step 65 - encode_board_one_hot_length_eighteen
+def encode_board_one_hot_length_eighteen(board, current_player):
+    """Convert board to two-channel one-hot vector of length 18."""
+    # Flip board perspective
+    flipped_board = flip_board_perspective(board, current_player)
+    
+    # Initialize arrays for own and opponent pieces
+    own_channel = np.zeros(9, dtype=np.float32)
+    opp_channel = np.zeros(9, dtype=np.float32)
+    
+    # Flatten the board
+    flat = flipped_board.flatten()
+    
+    # Fill channels based on cell values
+    # +1 for own pieces, -1 for opponent pieces, 0 for empty
+    for i, val in enumerate(flat):
+        if val == 1:
+            own_channel[i] = 1.0
+        elif val == -1:
+            opp_channel[i] = 1.0
+    
+    # Concatenate channels
+    return np.concatenate([own_channel, opp_channel])
 
 # Step 66 - build_mlp_architecture (not yet solved)
 # TODO: implement
