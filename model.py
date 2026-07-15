@@ -1401,8 +1401,50 @@ def mlp_backward_pass(params, cache, action_indices, target_q):
         'b2': db2
     }
 
-# Step 73 - adam_update_step (not yet solved)
-# TODO: implement
+# Step 73 - adam_update_step
+def adam_update_step(params, grads, adam_state, learning_rate=0.001, beta1=0.9, beta2=0.999, eps=1e-8):
+    """Perform one Adam optimizer step on the parameter dictionary."""
+    # Initialize or get existing state
+    if not adam_state:
+        adam_state = {
+            't': 0,
+            'm': {key: np.zeros_like(val) for key, val in params.items()},
+            'v': {key: np.zeros_like(val) for key, val in params.items()}
+        }
+    
+    # Increment step counter
+    adam_state['t'] += 1
+    t = adam_state['t']
+    
+    # Create new params dict
+    new_params = {}
+    
+    # Update each parameter
+    for key in params.keys():
+        # Get current parameter, gradient, and moments
+        param = params[key]
+        grad = grads[key]
+        m = adam_state['m'][key]
+        v = adam_state['v'][key]
+        
+        # Update biased first moment estimate
+        m = beta1 * m + (1 - beta1) * grad
+        
+        # Update biased second moment estimate
+        v = beta2 * v + (1 - beta2) * (grad ** 2)
+        
+        # Store updated moments
+        adam_state['m'][key] = m
+        adam_state['v'][key] = v
+        
+        # Bias-corrected estimates
+        m_hat = m / (1 - beta1 ** t)
+        v_hat = v / (1 - beta2 ** t)
+        
+        # Update parameter
+        new_params[key] = param - learning_rate * m_hat / (np.sqrt(v_hat) + eps)
+    
+    return new_params, adam_state
 
 # Step 74 - create_replay_buffer (not yet solved)
 # TODO: implement
