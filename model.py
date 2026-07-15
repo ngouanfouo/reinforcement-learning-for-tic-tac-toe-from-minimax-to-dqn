@@ -1938,8 +1938,34 @@ def train_sarsa_agent(num_episodes, alpha, gamma, initial_epsilon, min_epsilon, 
         'episode_outcomes': episode_outcomes
     }
 
-# Step 87 - reinforce_log_prob_of_action (not yet solved)
-# TODO: implement
+# Step 87 - reinforce_log_prob_of_action
+def reinforce_log_prob_of_action(logits, legal_action_mask, action):
+    """Compute log-probability of action under softmax policy over legal actions."""
+    # Mask illegal actions with -inf
+    masked_logits = mask_illegal_actions_neg_inf(logits, legal_action_mask)
+    
+    # Numerically stable softmax: subtract max for stability
+    max_logit = np.max(masked_logits)
+    # Handle case where all actions are illegal (shouldn't happen in Tic-Tac-Toe)
+    if np.isinf(max_logit) and max_logit < 0:
+        # All actions illegal - return uniform over legal (shouldn't happen)
+        probs = np.zeros_like(logits, dtype=float)
+        probs[legal_action_mask] = 1.0 / np.sum(legal_action_mask)
+        log_prob = np.log(probs[action]) if legal_action_mask[action] else -np.inf
+        return log_prob, probs
+    
+    # Stable softmax
+    exp_logits = np.exp(masked_logits - max_logit)
+    probs = exp_logits / np.sum(exp_logits)
+    
+    # Get log-probability of the chosen action
+    # probs[action] should be > 0 for legal actions
+    if not legal_action_mask[action]:
+        log_prob = -np.inf
+    else:
+        log_prob = np.log(probs[action])
+    
+    return log_prob, probs
 
 # Step 88 - reinforce_collect_episode_returns (not yet solved)
 # TODO: implement
