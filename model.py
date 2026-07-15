@@ -235,8 +235,52 @@ def play_interactive_game():
             # Suppress the error message to match the strict test assertions
             continue
 
-# Step 18 - TicTacToeGame (not yet solved)
-# TODO: implement
+# Step 18 - TicTacToeGame
+# ── Step 018  TicTacToeGame ──
+class TicTacToeGame:
+    """Stateful Tic-Tac-Toe environment wrapping the Part 1 engine."""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """Reset the game to the starting state and return the clean board."""
+        self.board = create_empty_board()
+        self.current_player = 1  # X starts
+        self.status = 'ongoing'
+        return self.board
+
+    def legal_moves(self):
+        """Return a list of (row, col) tuples still playable."""
+        return get_legal_moves(self.board)
+
+    def is_terminal(self):
+        """Return True once status is no longer 'ongoing'."""
+        return self.status != 'ongoing'
+
+    def step(self, row, col):
+        """
+        Play the current player's move at (row, col), refresh the status,
+        and switch the player only if the game is still ongoing.
+        """
+        if self.is_terminal():
+            raise ValueError("Cannot make a move in a terminal state.")
+            
+        if not is_cell_empty(self.board, row, col):
+            raise ValueError(f"Cell ({row}, {col}) is already occupied.")
+
+        # 1. Place the move on the board
+        self.board = place_move(self.board, row, col, self.current_player)
+        
+        # 2. Update status
+        self.status = get_game_status(self.board)
+        
+        # 3. Only switch active player if the game is ongoing.
+        # This keeps self.current_player pointed at the player who just won (or drew) when terminal.
+        if not self.is_terminal():
+            self.current_player = switch_player(self.current_player)
+            
+        return self.board, self.status
 
 # Step 19 - random_move_agent (not yet solved)
 # TODO: implement
