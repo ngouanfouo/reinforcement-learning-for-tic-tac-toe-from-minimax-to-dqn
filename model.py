@@ -998,8 +998,20 @@ def self_play_episode(q_table, alpha, gamma, epsilon, rng):
         'transitions': transitions
     }
 
-# Step 56 - flip_board_perspective (not yet solved)
-# TODO: implement
+# Step 56 - flip_board_perspective
+def flip_board_perspective(board, player):
+    """Return board from current player's perspective."""
+    # Create a copy of the board
+    flipped = board.copy()
+    
+    # If player is -1 (O), we need to flip the perspective
+    # For player = 1, the board stays the same (X is already +1)
+    if player == -1:
+        # Swap +1 and -1
+        flipped[board == 1] = -1
+        flipped[board == -1] = 1
+    
+    return flipped
 
 # Step 57 - perspective_reward_sign (not yet solved)
 # TODO: implement
