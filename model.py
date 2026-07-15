@@ -955,8 +955,48 @@ def compute_batched_outcome_stats(outcomes, batch_size):
         'draw_rate': np.array(draw_rates)
     }
 
-# Step 55 - self_play_episode (not yet solved)
-# TODO: implement
+# Step 55 - self_play_episode
+def self_play_episode(q_table, alpha, gamma, epsilon, rng):
+    """Run one episode where the Q-agent plays both sides."""
+    # Reset the game
+    board, current_player = episode_reset_game()
+    transitions = []
+    done = False
+    
+    while not done:
+        # Get state key and legal actions
+        state_key = canonical_board_key(board)
+        legal_moves = get_legal_moves(board)
+        legal_actions = [row * 3 + col for row, col in legal_moves]
+        
+        # Agent picks action for current player
+        action = epsilon_greedy_select_action(q_table, state_key, legal_actions, epsilon, rng)
+        
+        # Apply the action
+        trans = episode_apply_action(board, action, current_player, current_player)
+        next_board = trans['next_board']
+        status = trans['status']
+        reward = trans['reward']
+        done = trans['done']
+        
+        # Record the transition
+        transitions.append({
+            'state_key': state_key,
+            'action': action,
+            'reward': reward,
+            'next_board': next_board,
+            'done': done,
+            'player': current_player
+        })
+        
+        # Update board and player for next iteration
+        board = next_board
+        current_player = trans['next_player']
+    
+    return {
+        'final_status': status,
+        'transitions': transitions
+    }
 
 # Step 56 - flip_board_perspective (not yet solved)
 # TODO: implement
