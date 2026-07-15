@@ -1446,8 +1446,15 @@ def adam_update_step(params, grads, adam_state, learning_rate=0.001, beta1=0.9, 
     
     return new_params, adam_state
 
-# Step 74 - create_replay_buffer (not yet solved)
-# TODO: implement
+# Step 74 - create_replay_buffer
+from collections import deque
+
+def create_replay_buffer(capacity):
+    """Create an empty experience replay buffer with given capacity."""
+    return {
+        'data': deque(maxlen=capacity),
+        'capacity': capacity
+    }
 
 # Step 75 - append_transition_to_buffer (not yet solved)
 # TODO: implement
