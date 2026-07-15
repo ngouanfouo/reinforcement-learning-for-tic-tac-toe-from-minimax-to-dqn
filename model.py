@@ -791,8 +791,22 @@ def episode_reset_game():
     first_player = 1  # X always starts
     return board, first_player
 
-# Step 49 - episode_agent_pick_action (not yet solved)
-# TODO: implement
+# Step 49 - episode_agent_pick_action
+def episode_agent_pick_action(q_table, board, player, epsilon, rng):
+    """Choose agent action using epsilon-greedy, return (state_key, flat_action)."""
+    # Get canonical state key
+    state_key = canonical_board_key(board)
+    
+    # Get legal moves (tuples of (row, col))
+    legal_moves = get_legal_moves(board)
+    
+    # Convert legal moves to flat indices
+    legal_actions = [row * 3 + col for row, col in legal_moves]
+    
+    # Use epsilon-greedy selection
+    action = epsilon_greedy_select_action(q_table, state_key, legal_actions, epsilon, rng)
+    
+    return state_key, action
 
 # Step 50 - episode_apply_action (not yet solved)
 # TODO: implement
