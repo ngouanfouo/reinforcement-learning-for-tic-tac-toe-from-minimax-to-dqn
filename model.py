@@ -1362,8 +1362,44 @@ def mse_loss_on_chosen_action(predicted_q, action_indices, target_q):
     
     return float(loss)
 
-# Step 72 - mlp_backward_pass (not yet solved)
-# TODO: implement
+# Step 72 - mlp_backward_pass
+def mlp_backward_pass(params, cache, action_indices, target_q):
+    """Backpropagate MSE loss on chosen actions through the MLP."""
+    # Extract forward pass data
+    x = cache['x']  # (batch, input_dim)
+    z1 = cache['z1']  # (batch, hidden_dim)
+    h1 = cache['h1']  # (batch, hidden_dim)
+    q = cache['q']    # (batch, output_dim)
+    
+    batch_size = x.shape[0]
+    
+    # Gradient of loss w.r.t. q (output)
+    # dL/dq = (2/batch) * (q_chosen - target) for chosen actions, 0 elsewhere
+    dq = np.zeros_like(q)
+    batch_indices = np.arange(batch_size)
+    dq[batch_indices, action_indices] = (2.0 / batch_size) * (q[batch_indices, action_indices] - target_q)
+    
+    # Gradient w.r.t. W2 and b2: dL/dW2 = h1^T @ dq, dL/db2 = sum(dq, axis=0)
+    dW2 = h1.T @ dq
+    db2 = np.sum(dq, axis=0)
+    
+    # Gradient w.r.t. h1: dL/dh1 = dq @ W2^T
+    W2 = params['W2']
+    dh1 = dq @ W2.T
+    
+    # Gradient through ReLU: dL/dz1 = dh1 * (z1 > 0)
+    dz1 = dh1 * (z1 > 0)
+    
+    # Gradient w.r.t. W1 and b1: dL/dW1 = x^T @ dz1, dL/db1 = sum(dz1, axis=0)
+    dW1 = x.T @ dz1
+    db1 = np.sum(dz1, axis=0)
+    
+    return {
+        'W1': dW1,
+        'b1': db1,
+        'W2': dW2,
+        'b2': db2
+    }
 
 # Step 73 - adam_update_step (not yet solved)
 # TODO: implement
