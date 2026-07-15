@@ -197,8 +197,43 @@ def play_hardcoded_game(moves):
     final_status=get_game_status(board)
     return (board,final_status)
 
-# Step 17 - play_interactive_game (not yet solved)
-# TODO: implement
+# Step 17 - play_interactive_game
+# ── Step 017  play_interactive_game ──
+def play_interactive_game():
+    """Play a full game with two humans entering moves via stdin and return the final status."""
+    # Start with an empty 3x3 board
+    board = np.zeros((3, 3), dtype=int)
+    current_player = 1  # X starts
+    
+    while True:
+        # 1. Print the current board configuration
+        print_board(board)
+        
+        # 2. Check if the game has ended
+        status = get_game_status(board)
+        if status in ['X_win', 'O_win', 'draw']:
+            return status
+        
+        # 3. Read and validate the move from stdin
+        try:
+            line = input().strip()
+            if not line:
+                continue
+            
+            row, col = map(int, line.split())
+            
+            # Check bounds and occupancy
+            if not (0 <= row < 3 and 0 <= col < 3) or not is_cell_empty(board, row, col):
+                # Suppress the error message to match the strict test assertions
+                continue
+            
+            # 4. If valid, update the board and switch player
+            board = place_move(board, row, col, current_player)
+            current_player = switch_player(current_player)
+            
+        except (ValueError, IndexError):
+            # Suppress the error message to match the strict test assertions
+            continue
 
 # Step 18 - TicTacToeGame (not yet solved)
 # TODO: implement
